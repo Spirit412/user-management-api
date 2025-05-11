@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  app_user_management_api:
+    build: .
+    tty: true
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - PYTHONPATH=/var/www/html
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=user_management
+      - POSTGRES_HOST=db_user_management_api
+      - POSTGRES_PORT=5432
+      - MIGRATION_DATABASE_URL=${MIGRATION_DATABASE_URL}
+      - DEBUG=True
+    depends_on:
+      - db_user_management_api
+    volumes:
+      - ./app:/var/www/html/app
+    command: >
+      sh -c "python app/prestart.py &&
+      litestar --app app.main:app run --reload --host 0.0.0.0"
+
+  db_user_management_api:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-user_management}
+    ports:
+      - "5452:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
